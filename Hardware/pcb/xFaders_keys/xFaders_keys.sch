@@ -1,5 +1,4 @@
 EESchema Schematic File Version 4
-LIBS:xFaders_keys-cache
 EELAYER 30 0
 EELAYER END
 $Descr A4 11693 8268
@@ -1282,4 +1281,15 @@ Wire Wire Line
 	6900 5200 6900 5300
 Wire Wire Line
 	6900 6000 6900 5900
+$Comp
+L kicad-keyboard-parts:SK6812MINI-E D31
+U 1 1 6025F252
+P 8450 2500
+F 0 "D31" H 8794 2546 50  0000 L CNN
+F 1 "SK6812MINI-E" H 8794 2455 50  0000 L CNN
+F 2 "kicad-keyboard-parts:MX_SK6812MINI-E" H 8500 2200 50  0001 L TNN
+F 3 "https://cdn-shop.adafruit.com/product-files/2686/SK6812MINI_REV.01-1-2.pdf" H 8550 2125 50  0001 L TNN
+	1    8450 2500
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
