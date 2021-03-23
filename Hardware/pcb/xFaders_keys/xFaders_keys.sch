@@ -1278,23 +1278,15 @@ Wire Wire Line
 	6200 5250 6200 5350
 Wire Wire Line
 	6200 6050 6200 5950
-$Sheet
-S 900  2900 650  800 
-U 602D74FD
-F0 "RGB_LEDs" 50
-F1 "RGB_LEDs.sch" 50
-F2 "DataIn" I L 900 3200 50 
-F3 "DataOut" O L 900 3400 50 
-$EndSheet
 $Comp
 L Connector:Conn_01x02_Female J2
 U 1 1 605C87E4
-P 1000 2450
-F 0 "J2" H 892 2125 50  0000 C CNN
-F 1 "Conn_01x02_Female" H 892 2216 50  0000 C CNN
-F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1000 2450 50  0001 C CNN
-F 3 "~" H 1000 2450 50  0001 C CNN
-	1    1000 2450
+P 1000 2350
+F 0 "J2" H 892 2025 50  0000 C CNN
+F 1 "Conn_01x02_Female" H 892 2116 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1000 2350 50  0001 C CNN
+F 3 "~" H 1000 2350 50  0001 C CNN
+	1    1000 2350
 	-1   0    0    1   
 $EndComp
 Text GLabel 1200 2350 2    50   Input ~ 0
@@ -1302,20 +1294,52 @@ GND
 $Comp
 L power:+5V #PWR025
 U 1 1 605CA370
-P 1200 2450
-F 0 "#PWR025" H 1200 2300 50  0001 C CNN
-F 1 "+5V" V 1215 2578 50  0000 L CNN
-F 2 "" H 1200 2450 50  0001 C CNN
-F 3 "" H 1200 2450 50  0001 C CNN
-	1    1200 2450
+P 1200 2250
+F 0 "#PWR025" H 1200 2100 50  0001 C CNN
+F 1 "+5V" V 1215 2378 50  0000 L CNN
+F 2 "" H 1200 2250 50  0001 C CNN
+F 3 "" H 1200 2250 50  0001 C CNN
+	1    1200 2250
 	0    1    1    0   
 $EndComp
 Text GLabel 850  950  0    50   Input ~ 0
 DataIn
 Text GLabel 1350 1750 2    50   Output ~ 0
 DataOut
-Text GLabel 900  3200 0    50   Input ~ 0
+Text GLabel 950  3550 0    50   Input ~ 0
 DataIn
-Text GLabel 900  3400 0    50   Output ~ 0
+Text GLabel 950  3750 0    50   Output ~ 0
 DataOut
+$Comp
+L Connector:Conn_01x02_Female J3
+U 1 1 6064A5CA
+P 1000 2800
+F 0 "J3" H 892 2475 50  0000 C CNN
+F 1 "Conn_01x02_Female" H 892 2566 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 1000 2800 50  0001 C CNN
+F 3 "~" H 1000 2800 50  0001 C CNN
+	1    1000 2800
+	-1   0    0    1   
+$EndComp
+Text GLabel 1200 2800 2    50   Input ~ 0
+GND
+$Comp
+L power:+5V #PWR013
+U 1 1 6064A5D1
+P 1200 2700
+F 0 "#PWR013" H 1200 2550 50  0001 C CNN
+F 1 "+5V" V 1215 2828 50  0000 L CNN
+F 2 "" H 1200 2700 50  0001 C CNN
+F 3 "" H 1200 2700 50  0001 C CNN
+	1    1200 2700
+	0    1    1    0   
+$EndComp
+$Sheet
+S 950  3250 650  800 
+U 602D74FD
+F0 "RGB_LEDs" 50
+F1 "RGB_LEDs.sch" 50
+F2 "DataIn" I L 950 3550 50 
+F3 "DataOut" O L 950 3750 50 
+$EndSheet
 $EndSCHEMATC
