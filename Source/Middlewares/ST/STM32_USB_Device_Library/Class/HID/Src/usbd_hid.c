@@ -107,7 +107,11 @@ static uint8_t  *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length);
 
 static uint8_t  *USBD_HID_GetDeviceQualifierDesc(uint16_t *length);
 
+// static uint8_t  USBD_MIDI_RegisterInterface(USBD_HandleTypeDef   *pdev, USBD_MIDI_CallbacksTypeDef *fops);
+
 static uint8_t  USBD_HID_DataIn(USBD_HandleTypeDef *pdev, uint8_t epnum);
+
+static uint8_t  USBD_HID_DataOut(USBD_HandleTypeDef *pdev, uint8_t epnum);
 /**
   * @}
   */
@@ -124,7 +128,7 @@ USBD_ClassTypeDef  USBD_HID =
   NULL, /*EP0_TxSent*/
   NULL, /*EP0_RxReady*/
   USBD_HID_DataIn, /*DataIn*/
-  NULL, /*DataOut*/
+  USBD_HID_DataOut, /*DataOut*/
   NULL, /*SOF */
   NULL,
   NULL,
@@ -141,6 +145,9 @@ USBD_ClassTypeDef  USBD_HID =
 #define 	MIDI_DATA_OUT_PACKET_SIZE	0x40
 
 #define 	MIDI_IN_FRAME_INTERVAL		1
+
+/** Received data over USB are stored in this buffer      */
+uint8_t UserRxBufferFS[MIDI_DATA_OUT_PACKET_SIZE];
 
 
 /* USB HID device FS Configuration Descriptor */
@@ -477,17 +484,26 @@ __ALIGN_BEGIN static uint8_t HID_MOUSE_ReportDesc[HID_MOUSE_REPORT_DESC_SIZE]  _
 static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 {
   /* Open EP IN */
-  USBD_LL_OpenEP(pdev, HID_EPIN_ADDR, USBD_EP_TYPE_INTR, HID_EPIN_SIZE);
-  pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 1U;
+  USBD_LL_OpenEP(pdev, MIDI_IN_EP, USBD_EP_TYPE_INTR, MIDI_DATA_IN_PACKET_SIZE);
+  pdev->ep_in[MIDI_IN_EP & 0xFU].is_used = 1U;
 
-  pdev->pClassData = USBD_malloc(sizeof(USBD_HID_HandleTypeDef));
+  /* Open EP OUT */
+  USBD_LL_OpenEP(pdev, MIDI_OUT_EP, USBD_EP_TYPE_BULK, MIDI_DATA_OUT_PACKET_SIZE);
+  pdev->ep_out[MIDI_OUT_EP & 0xFU].is_used = 1U;
+
+  pdev->pClassData = USBD_malloc(sizeof(USBD_MIDI_HandleTypeDef));
 
   if (pdev->pClassData == NULL)
   {
     return USBD_FAIL;
   }
 
-  ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+  USBD_MIDI_HandleTypeDef * handler = ((USBD_MIDI_HandleTypeDef *)pdev->pClassData);
+  handler->state = HID_IDLE;
+  handler->RxBuffer = UserRxBufferFS;
+
+  /* Prepare Out endpoint to receive next packet */
+  USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, handler->RxBuffer, MIDI_DATA_OUT_PACKET_SIZE);
 
   return USBD_OK;
 }
@@ -502,9 +518,12 @@ static uint8_t  USBD_HID_Init(USBD_HandleTypeDef *pdev, uint8_t cfgidx)
 static uint8_t  USBD_HID_DeInit(USBD_HandleTypeDef *pdev,
                                 uint8_t cfgidx)
 {
-  /* Close HID EPs */
-  USBD_LL_CloseEP(pdev, HID_EPIN_ADDR);
-  pdev->ep_in[HID_EPIN_ADDR & 0xFU].is_used = 0U;
+  /* Close EPs */
+  USBD_LL_CloseEP(pdev, MIDI_IN_EP);
+  pdev->ep_in[MIDI_IN_EP & 0xFU].is_used = 0U;
+
+  USBD_LL_CloseEP(pdev, MIDI_OUT_EP);
+  pdev->ep_in[MIDI_OUT_EP & 0xFU].is_used = 0U;
 
   /* FRee allocated memory */
   if (pdev->pClassData != NULL)
@@ -526,7 +545,7 @@ static uint8_t  USBD_HID_DeInit(USBD_HandleTypeDef *pdev,
 static uint8_t  USBD_HID_Setup(USBD_HandleTypeDef *pdev,
                                USBD_SetupReqTypedef *req)
 {
-  USBD_HID_HandleTypeDef *hhid = (USBD_HID_HandleTypeDef *) pdev->pClassData;
+  USBD_MIDI_HandleTypeDef *hhid = (USBD_MIDI_HandleTypeDef *) pdev->pClassData;
   uint16_t len = 0U;
   uint8_t *pbuf = NULL;
   uint16_t status_info = 0U;
@@ -645,7 +664,7 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
                             uint8_t *report,
                             uint16_t len)
 {
-  USBD_HID_HandleTypeDef     *hhid = (USBD_HID_HandleTypeDef *)pdev->pClassData;
+  USBD_MIDI_HandleTypeDef     *hhid = (USBD_MIDI_HandleTypeDef *)pdev->pClassData;
 
   if (pdev->dev_state == USBD_STATE_CONFIGURED)
   {
@@ -653,7 +672,7 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef  *pdev,
     {
       hhid->state = HID_BUSY;
       USBD_LL_Transmit(pdev,
-                       HID_EPIN_ADDR,
+                       MIDI_IN_EP,
                        report,
                        len);
     }
@@ -729,6 +748,26 @@ static uint8_t  *USBD_HID_GetOtherSpeedCfgDesc(uint16_t *length)
 }
 
 /**
+* @brief  USBD_MIDI_RegisterInterface
+  * @param  pdev: device instance
+  * @param  fops: Midi  Interface callback
+  * @retval status
+  */
+uint8_t  USBD_MIDI_RegisterInterface(USBD_HandleTypeDef   *pdev,
+                                    USBD_MIDI_CallbacksTypeDef *fops)
+{
+  uint8_t  ret = USBD_FAIL;
+
+  if (fops != NULL)
+  {
+    pdev->pUserData = fops;
+    ret = USBD_OK;
+  }
+
+  return ret;
+}
+
+/**
   * @brief  USBD_HID_DataIn
   *         handle data IN Stage
   * @param  pdev: device instance
@@ -741,8 +780,41 @@ static uint8_t  USBD_HID_DataIn(USBD_HandleTypeDef *pdev,
 
   /* Ensure that the FIFO is empty before a new transfer, this condition could
   be caused by  a new transfer before the end of the previous transfer */
-  ((USBD_HID_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
+  ((USBD_MIDI_HandleTypeDef *)pdev->pClassData)->state = HID_IDLE;
   return USBD_OK;
+}
+
+
+/**
+  * @brief  USBD_HID_DataOut
+  *         handle data OUT Stage
+  * @param  pdev: device instance
+  * @param  epnum: endpoint index
+  * @retval status
+  */
+static uint8_t  USBD_HID_DataOut(USBD_HandleTypeDef *pdev,
+                                uint8_t epnum)
+{
+	  USBD_MIDI_HandleTypeDef   *handler = (USBD_MIDI_HandleTypeDef *) pdev->pClassData;
+
+	  /* Get the received data length */
+	  handler->RxLength = USBD_LL_GetRxDataSize(pdev, epnum);
+
+	  /* USB data will be immediately processed, this allow next USB traffic being
+	  NAKed till the end of the application Xfer */
+	  if (pdev->pClassData != NULL)
+	  {
+		((USBD_MIDI_CallbacksTypeDef *)pdev->pUserData)->Receive(handler->RxBuffer, handler->RxLength);
+
+	    /* Prepare Out endpoint to receive next packet */
+	    USBD_LL_PrepareReceive(pdev, MIDI_OUT_EP, handler->RxBuffer, MIDI_DATA_OUT_PACKET_SIZE);
+
+	    return USBD_OK;
+	  }
+	  else
+	  {
+	    return USBD_FAIL;
+	  }
 }
 
 

@@ -37,6 +37,13 @@ extern "C" {
   * @{
   */
 
+typedef struct _USBD_MIDI_Callbacks
+{
+  int8_t (* Receive)(uint8_t *Buf, uint32_t Len);
+
+} USBD_MIDI_CallbacksTypeDef;
+
+
 
 /** @defgroup USBD_HID_Exported_Defines
   * @{
@@ -88,9 +95,13 @@ typedef struct
   uint32_t             Protocol;
   uint32_t             IdleState;
   uint32_t             AltSetting;
-  HID_StateTypeDef     state;
+  uint8_t  			   *RxBuffer;
+  uint8_t              *TxBuffer;
+  uint32_t             RxLength;
+  uint32_t             TxLength;
+  HID_StateTypeDef     state; //still needed?
 }
-USBD_HID_HandleTypeDef;
+USBD_MIDI_HandleTypeDef;
 /**
   * @}
   */
@@ -123,6 +134,9 @@ uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev,
                             uint16_t len);
 
 uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev);
+
+uint8_t  USBD_MIDI_RegisterInterface(USBD_HandleTypeDef   *pdev,
+                                    USBD_MIDI_CallbacksTypeDef *fops);
 
 /**
   * @}
