@@ -18,8 +18,8 @@
   */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __USB_HID_H
-#define __USB_HID_H
+#ifndef __USB_MIDI_H
+#define __USB_MIDI_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,14 +28,6 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include  "usbd_ioreq.h"
 
-/** @addtogroup STM32_USB_DEVICE_LIBRARY
-  * @{
-  */
-
-/** @defgroup USBD_HID
-  * @brief This file is the Header file for usbd_hid.c
-  * @{
-  */
 
 typedef struct _USBD_MIDI_Callbacks
 {
@@ -45,9 +37,6 @@ typedef struct _USBD_MIDI_Callbacks
 
 
 
-/** @defgroup USBD_HID_Exported_Defines
-  * @{
-  */
 #define HID_EPIN_ADDR                 0x81U
 #define HID_EPIN_SIZE                 0x04U
 
@@ -74,14 +63,7 @@ typedef struct _USBD_MIDI_Callbacks
 
 #define HID_REQ_SET_REPORT            0x09U
 #define HID_REQ_GET_REPORT            0x01U
-/**
-  * @}
-  */
 
-
-/** @defgroup USBD_CORE_Exported_TypesDefinitions
-  * @{
-  */
 typedef enum
 {
   HID_IDLE = 0,
@@ -90,6 +72,7 @@ typedef enum
 HID_StateTypeDef;
 
 
+// TODO: Cleanup StateTypeDef
 typedef struct
 {
   uint32_t             Protocol;
@@ -102,57 +85,22 @@ typedef struct
   HID_StateTypeDef     state; //still needed?
 }
 USBD_MIDI_HandleTypeDef;
-/**
-  * @}
-  */
+
+extern USBD_ClassTypeDef  USBD_MIDI;
+#define USBD_MIDI_CLASS    &USBD_MIDI
 
 
-
-/** @defgroup USBD_CORE_Exported_Macros
-  * @{
-  */
-
-/**
-  * @}
-  */
-
-/** @defgroup USBD_CORE_Exported_Variables
-  * @{
-  */
-
-extern USBD_ClassTypeDef  USBD_HID;
-#define USBD_HID_CLASS    &USBD_HID
-/**
-  * @}
-  */
-
-/** @defgroup USB_CORE_Exported_Functions
-  * @{
-  */
-uint8_t USBD_HID_SendReport(USBD_HandleTypeDef *pdev,
+uint8_t USBD_MIDI_SendReport(USBD_HandleTypeDef *pdev,
                             uint8_t *report,
                             uint16_t len);
 
-uint32_t USBD_HID_GetPollingInterval(USBD_HandleTypeDef *pdev);
-
 uint8_t  USBD_MIDI_RegisterInterface(USBD_HandleTypeDef   *pdev,
                                     USBD_MIDI_CallbacksTypeDef *fops);
-
-/**
-  * @}
-  */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __USB_HID_H */
-/**
-  * @}
-  */
+#endif  /* __USB_MIDI_H */
 
-/**
-  * @}
-  */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

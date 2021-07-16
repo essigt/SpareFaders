@@ -328,11 +328,11 @@ int main(void)
 				if (value == 0) {
 					midiNodeOn.data[2] = note;
 					midiNodeOn.data[3] = 127;
-					USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 				} else {
 					midiNodeOff.data[2] = note;
 					midiNodeOff.data[3] = 127;
-					USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
 				}
 
 				lastKeyMatrix[col][row] = value;
@@ -349,7 +349,7 @@ int main(void)
 			midiNodeOn.data[2] = 100 + col;
 			midiNodeOn.data[3] = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
 
-			USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
+			USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 
 			lastFader[col] = adcResult;
 		}
