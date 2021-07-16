@@ -14,7 +14,7 @@ int8_t MIDI_Receive(uint8_t *Buf, uint32_t Len) {
 	WRITE_REG(GPIOC->BSRR, GPIO_BSRR_BR13); //LED On
 
 	// echo
-	USBD_HID_SendReport(&hUsbDeviceFS, Buf, Len);
+	USBD_MIDI_SendReport(&hUsbDeviceFS, Buf, Len);
 
 	return USBD_OK;
 }

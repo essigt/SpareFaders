@@ -6,7 +6,7 @@
 #endif
 
 
-#include "usbd_hid.h"
+#include "usbd_midi.h"
 
 
  extern USBD_MIDI_CallbacksTypeDef USBD_Interface_Callbacks;
