@@ -7,8 +7,6 @@ static void writeEncodedSPIData(uint8_t value, uint8_t* destination);
 
 
 // PRIVATE VARIABLES
-
-#define LED_AMOUNT 3
 #define RESET_PADDING 300
 
 #define AMOUNT_OF_BYTES (LED_AMOUNT * 9 + RESET_PADDING)
@@ -37,42 +35,115 @@ void RGB_LED_DeInit() {
 
 	 uint16_t byteOffset = pos * 9;
 
+	 // colors are in green - red - blue order
+
 	 if(color == WHITE) {
-	   writeEncodedSPIData(64, encodedData + byteOffset);
-       writeEncodedSPIData(64, encodedData + byteOffset + 3);
-       writeEncodedSPIData(64, encodedData + byteOffset + 6);
+	   writeEncodedSPIData(8, encodedData + byteOffset);
+		writeEncodedSPIData(8, encodedData + byteOffset + 3);
+		writeEncodedSPIData(8, encodedData + byteOffset + 6);
 	 } else if(color == RED) {
 	   writeEncodedSPIData(0, encodedData + byteOffset);
-	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
 	 } else if(color == ORANGE) {
-	   writeEncodedSPIData(20, encodedData + byteOffset);
-	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(3, encodedData + byteOffset);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
 	 } else if(color == YELLOW) {
-	   writeEncodedSPIData(32, encodedData + byteOffset);
-	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(5, encodedData + byteOffset);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 }else if(color == FERNGREEN) {
+	   writeEncodedSPIData(8, encodedData + byteOffset);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
 	 } else if(color == GREEN) {
-	   writeEncodedSPIData(64, encodedData + byteOffset);
-	   writeEncodedSPIData(30, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(8, encodedData + byteOffset);
+	   writeEncodedSPIData(4, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
-	 } else if(color == CYAN) {
-	   writeEncodedSPIData(64, encodedData + byteOffset);
+	 } else if(color == SEAGREEN) {
+	   writeEncodedSPIData(8, encodedData + byteOffset);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
-	   writeEncodedSPIData(42, encodedData + byteOffset + 6);
+	   writeEncodedSPIData(2, encodedData + byteOffset + 6);
+	 } else if(color == CYAN) {
+	   writeEncodedSPIData(8, encodedData + byteOffset);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(5, encodedData + byteOffset + 6);
+	 } else if(color == LAVENDER) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(2, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 6);
 	 } else if(color == BLUE) {
 	   writeEncodedSPIData(0, encodedData + byteOffset);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(4, encodedData + byteOffset + 6);
+	 } else if(color == VIOLET) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(2, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(4, encodedData + byteOffset + 6);
+	 } else if(color == MAGENTA) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 6);
+	 } else if(color == PINK) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(8, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(2, encodedData + byteOffset + 6);
+	 }
+
+
+	 else if(color == WHITE_BRIGHT) {
+	   writeEncodedSPIData(64, encodedData + byteOffset);
+       writeEncodedSPIData(64, encodedData + byteOffset + 3);
+       writeEncodedSPIData(64, encodedData + byteOffset + 6);
+	 } else if(color == RED_BRIGHT) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 } else if(color == ORANGE_BRIGHT) {
+	   writeEncodedSPIData(20, encodedData + byteOffset);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 } else if(color == YELLOW_BRIGHT) {
+	   writeEncodedSPIData(32, encodedData + byteOffset);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 }else if(color == FERNGREEN_BRIGHT) {
+	   writeEncodedSPIData(64, encodedData + byteOffset);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 } else if(color == GREEN_BRIGHT) {
+	   writeEncodedSPIData(64, encodedData + byteOffset);
+	   writeEncodedSPIData(30, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 6);
+	 } else if(color == SEAGREEN_BRIGHT) {
+	   writeEncodedSPIData(64, encodedData + byteOffset);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(16, encodedData + byteOffset + 6);
+	 } else if(color == CYAN_BRIGHT) {
+	   writeEncodedSPIData(64, encodedData + byteOffset);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(42, encodedData + byteOffset + 6);
+	 } else if(color == LAVENDER_BRIGHT) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(16, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(64, encodedData + byteOffset + 6);
-	 } else if(color == PURPLE) {
+	 } else if(color == BLUE_BRIGHT) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(0, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 6);
+	 } else if(color == VIOLET_BRIGHT) {
 	   writeEncodedSPIData(0, encodedData + byteOffset);
 	   writeEncodedSPIData(32, encodedData + byteOffset + 3);
 	   writeEncodedSPIData(64, encodedData + byteOffset + 6);
-	 } else if(color == PINK) {
+	 } else if(color == MAGENTA_BRIGHT) {
 	   writeEncodedSPIData(0, encodedData + byteOffset);
 	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
-	   writeEncodedSPIData(54, encodedData + byteOffset + 6);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 6);
+	 } else if(color == PINK_BRIGHT) {
+	   writeEncodedSPIData(0, encodedData + byteOffset);
+	   writeEncodedSPIData(64, encodedData + byteOffset + 3);
+	   writeEncodedSPIData(18, encodedData + byteOffset + 6);
 	 } else {
 	   writeEncodedSPIData(0, encodedData + byteOffset);
 	   writeEncodedSPIData(0, encodedData + byteOffset + 3);

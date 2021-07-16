@@ -8,29 +8,55 @@
 #include <stdio.h>
 #include "stm32f1xx_hal.h"
 
- extern SPI_HandleTypeDef hspi2;
+extern SPI_HandleTypeDef hspi2;
 
- typedef enum
- {
-   WHITE   = 0U,
+#define LED_AMOUNT 60
+
+typedef enum
+{
+   BLACK   = 0U,
+   // Dark colors (1 - 13)
+   WHITE,
    RED,
    ORANGE,
    YELLOW,
+   FERNGREEN,
    GREEN,
+   SEAGREEN,
    CYAN,
+   LAVENDER,
    BLUE,
-   PURPLE,
+   VIOLET,
+   MAGENTA,
    PINK,
-   BLACK
- } RGB_LED_Color;
+   CTO,
+   CTB,
+   BLACK2,
+   // Bright colors (15 - 27)
+   WHITE_BRIGHT,
+  RED_BRIGHT,
+  ORANGE_BRIGHT,
+  YELLOW_BRIGHT,
+  FERNGREEN_BRIGHT,
+  GREEN_BRIGHT,
+  SEAGREEN_BRIGHT,
+  CYAN_BRIGHT,
+  LAVENDER_BRIGHT,
+  BLUE_BRIGHT,
+  VIOLET_BRIGHT,
+  MAGENTA_BRIGHT,
+  PINK_BRIGHT,
+  CTO_BRIGHT,
+  CTB_BRIGHT
 
- void RGB_LED_Init();
- void RGB_LED_DeInit();
+} RGB_LED_Color;
+
+void RGB_LED_Init();
+void RGB_LED_DeInit();
 
 
- void RGB_LED_SetLed(uint8_t pos, RGB_LED_Color color);
- void RGB_LED_Flush();
-
+void RGB_LED_SetLed(uint8_t pos, RGB_LED_Color color);
+void RGB_LED_Flush();
 
 
 
