@@ -159,7 +159,12 @@ void RGB_LED_DeInit() {
  }
 
  void RGB_LED_Flush() {
-	 HAL_SPI_Transmit(&hspi2, encodedData, AMOUNT_OF_BYTES, 1000000);
+
+	 __disable_irq();
+
+	 HAL_SPI_Transmit(&hspi2, encodedData, AMOUNT_OF_BYTES, 10000000);
+
+	 __enable_irq();
  }
 
 
