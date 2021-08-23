@@ -56,6 +56,7 @@ void RGB_LED_DeInit();
 
 
 void RGB_LED_SetLed(uint8_t pos, RGB_LED_Color color);
+void RGB_LED_Clear();
 void RGB_LED_Flush();
 
 

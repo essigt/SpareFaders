@@ -151,6 +151,12 @@ void RGB_LED_DeInit() {
 	 }
  }
 
+ void RGB_LED_Clear() {
+
+	 for(int i=0; i < LED_AMOUNT ; i++) {
+		 RGB_LED_SetLed(i, BLACK);
+	}
+ }
 
  void RGB_LED_Flush() {
 	 HAL_SPI_Transmit(&hspi2, encodedData, AMOUNT_OF_BYTES, 1000000);

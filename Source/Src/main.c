@@ -227,6 +227,25 @@ uint8_t poolADC(uint8_t col) {
 	return adcResult;
 }
 
+void renderAnimationStep(uint8_t step) {
+	// animation contains of 2*15 + 1 step = 31
+	uint8_t actualStep = step % 30;
+	uint8_t currentCol = 0;
+
+	RGB_LED_Clear();
+
+	if(actualStep < 15) {
+		currentCol = actualStep;
+	} else if(actualStep < 30) {
+		currentCol = 29 - actualStep;
+	}
+
+	RGB_LED_SetLed(currentCol, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 15, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 30, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 45, YELLOW_BRIGHT);
+}
+
 void delay_us (uint16_t us) {
 
 	__HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
@@ -309,17 +328,41 @@ int main(void)
   WRITE_REG(GPIOC->BSRR, GPIO_BSRR_BS13); //LED Off
 
   uint8_t refreshCounter = 0;
-  RGB_LED_SetLed(0, PINK);
-  RGB_LED_SetLed(1, PINK_BRIGHT);
-  RGB_LED_SetLed(2, BLACK);
+  uint16_t animationCounter = 0;
+  uint8_t previousAnimationStep = 0;
+  uint8_t startUpAnimationRunning = 1;
 
   while (1)
   {
 
-	  if(refreshCounter == 0) {
+	  // Render startup animation
+	  // TODO: Move to separate function
+	  // TODO: Add fixed step timing instead of simple cycle counter
+	  if(startUpAnimationRunning) {
 
+		  uint8_t animationStep = animationCounter / 50;
+
+		  if(previousAnimationStep != animationStep) {
+			  previousAnimationStep = animationStep;
+
+			  renderAnimationStep(animationStep);
+
+			  RGB_LED_Flush();
+		  }
+
+		  if(animationStep == 60) {
+			  RGB_LED_Clear();
+			  RGB_LED_Flush();
+			  startUpAnimationRunning = 0;
+		  }
+
+		  animationCounter++;
+	  }
+
+	  // Periodic refresh of leds
+	  // TODO: use fixed timing
+	  if(refreshCounter == 0 && startUpAnimationRunning == 0) {
 		  RGB_LED_Flush();
-
 	  }
 	  refreshCounter++;
 
