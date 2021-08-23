@@ -191,9 +191,9 @@ void setDemultiplexFor(uint8_t col) {
 	}
 
 	if(col & (1 << 1) ) {
-		WRITE_REG(GPIOB->BSRR, GPIO_BSRR_BS13);
+		WRITE_REG(GPIOA->BSRR, GPIO_BSRR_BS10); // PB13 -> PA10
 	} else {
-		WRITE_REG(GPIOB->BSRR, GPIO_BSRR_BR13);
+		WRITE_REG(GPIOA->BSRR, GPIO_BSRR_BR10);
 	}
 
 	if(col & (1 << 2) ) {
