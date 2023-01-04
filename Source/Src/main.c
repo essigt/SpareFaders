@@ -380,13 +380,13 @@ int main(void)
 				uint8_t note = row * NUM_COLS + col;
 
 				if (value == 0) {
-					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 					midiNodeOn.midi2 = note;
 					midiNodeOn.midi3 = 127;
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 				} else {
-					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
 					midiNodeOff.midi2 = note;
 					midiNodeOff.midi3 = 127;
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
 				}
 
 				lastKeyMatrix[col][row] = value;
@@ -399,7 +399,7 @@ int main(void)
 
 		uint8_t adcResult = poolADC(col);
 
-		if(abs(lastFader[col] - adcResult) > 1) {
+		if(abs(lastFader[col] - adcResult) > 2) {
 			midiNodeOn.midi2 = 100 + col;
 			midiNodeOn.midi3 = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
 
