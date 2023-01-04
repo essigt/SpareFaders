@@ -243,19 +243,22 @@ int main(void)
 
 	// HID MIDI
 	struct midiHID_t {
-		uint8_t data[4];
+		uint8_t cable;
+		uint8_t midi1;
+		uint8_t midi2;
+		uint8_t midi3;
 	};
 	struct midiHID_t midiNodeOn;
-	midiNodeOn.data[0] = 0x08; // CI= Virtual Channel 1 & CIN=Note On
-	midiNodeOn.data[1] = 0x90; // 9=Note On / 0=Channel 0
-	midiNodeOn.data[2] = 60;  // Note
-	midiNodeOn.data[3] = 127; // Velocity=127
+	midiNodeOn.cable = 0x09; // CI= Virtual Channel 1 & CIN=Note On
+	midiNodeOn.midi1 = 0x90; // 9=Note On / 0=Channel 0
+	midiNodeOn.midi2 = 60;  // Note
+	midiNodeOn.midi3 = 127; // Velocity=127
 
 	struct midiHID_t midiNodeOff;
-	midiNodeOff.data[0] = 0x08; // CI= Virtual Channel 1 & CIN=Note On
-	midiNodeOff.data[1] = 0x80; // 8=Note Off / 0=Channel 0
-	midiNodeOff.data[2] = 60; //Note
-	midiNodeOff.data[3] = 127; // Velocity=127
+	midiNodeOff.cable = 0x08; // CI= Virtual Channel 1 & CIN=Note Off
+	midiNodeOff.midi1 = 0x80; // 8=Note Off / 0=Channel 0
+	midiNodeOff.midi2 = 60; //Note
+	midiNodeOff.midi3 = 127; // Velocity=127
 
   /* USER CODE END 1 */
   
@@ -313,12 +316,12 @@ int main(void)
 				uint8_t note = row * NUM_COLS + col;
 
 				if (value == 0) {
-					midiNodeOn.data[2] = note;
-					midiNodeOn.data[3] = 127;
+					midiNodeOn.midi2 = note;
+					midiNodeOn.midi3 = 127;
 					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 				} else {
-					midiNodeOff.data[2] = note;
-					midiNodeOff.data[3] = 127;
+					midiNodeOff.midi2 = note;
+					midiNodeOff.midi3 = 127;
 					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
 				}
 
@@ -332,9 +335,9 @@ int main(void)
 
 		uint8_t adcResult = poolADC(col);
 
-		if(abs(lastFader[col] - adcResult) > 1) {
-			midiNodeOn.data[2] = 100 + col;
-			midiNodeOn.data[3] = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
+		if(abs(lastFader[col] - adcResult) > 2) {
+			midiNodeOn.midi2 = 100 + col;
+			midiNodeOn.midi3 = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
 
 			USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 
