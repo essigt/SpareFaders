@@ -226,6 +226,19 @@ uint8_t poolADC(uint8_t col) {
 		adcResult = 0;
 	}
 
+	if(adcResult > 50 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 100 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 150 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 200 && adcResult < 255) {
+		adcResult+=1;
+	}
+
 	return adcResult;
 }
 
