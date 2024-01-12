@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "rgb_led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,6 +46,8 @@
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 
+SPI_HandleTypeDef hspi2;
+
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
@@ -58,6 +60,7 @@ static void MX_GPIO_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_SPI2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -188,9 +191,9 @@ void setDemultiplexFor(uint8_t col) {
 	}
 
 	if(col & (1 << 1) ) {
-		WRITE_REG(GPIOB->BSRR, GPIO_BSRR_BS13);
+		WRITE_REG(GPIOA->BSRR, GPIO_BSRR_BS10); // PB13 -> PA10
 	} else {
-		WRITE_REG(GPIOB->BSRR, GPIO_BSRR_BR13);
+		WRITE_REG(GPIOA->BSRR, GPIO_BSRR_BR10);
 	}
 
 	if(col & (1 << 2) ) {
@@ -221,7 +224,44 @@ uint8_t poolADC(uint8_t col) {
 		HAL_ADC_Stop(&hadc1);
 	}
 
+	// lower limit
+	if(adcResult == 1) {
+		adcResult = 0;
+	}
+
+	if(adcResult > 50 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 100 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 150 && adcResult < 255) {
+		adcResult+=1;
+	}
+	if(adcResult > 200 && adcResult < 255) {
+		adcResult+=1;
+	}
+
 	return adcResult;
+}
+
+void renderAnimationStep(uint8_t step) {
+	// animation contains of 2*15 + 1 step = 31
+	uint8_t actualStep = step % 30;
+	uint8_t currentCol = 0;
+
+	RGB_LED_Clear();
+
+	if(actualStep < 15) {
+		currentCol = actualStep;
+	} else if(actualStep < 30) {
+		currentCol = 29 - actualStep;
+	}
+
+	RGB_LED_SetLed(currentCol, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 15, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 30, YELLOW_BRIGHT);
+	RGB_LED_SetLed(currentCol + 45, YELLOW_BRIGHT);
 }
 
 void delay_us (uint16_t us) {
@@ -229,6 +269,7 @@ void delay_us (uint16_t us) {
 	__HAL_TIM_SET_COUNTER(&htim1,0);  // set the counter value a 0
 	while (__HAL_TIM_GET_COUNTER(&htim1) < us);  // wait for the counter to reach the us input in the parameter
 }
+
 
 
 /* USER CODE END 0 */
@@ -243,19 +284,22 @@ int main(void)
 
 	// HID MIDI
 	struct midiHID_t {
-		uint8_t data[4];
+		uint8_t cable;
+		uint8_t midi1;
+		uint8_t midi2;
+		uint8_t midi3;
 	};
 	struct midiHID_t midiNodeOn;
-	midiNodeOn.data[0] = 0x08; // CI= Virtual Channel 1 & CIN=Note On
-	midiNodeOn.data[1] = 0x90; // 9=Note On / 0=Channel 0
-	midiNodeOn.data[2] = 60;  // Note
-	midiNodeOn.data[3] = 127; // Velocity=127
+	midiNodeOn.cable = 0x09; // CI= Virtual Channel 1 & CIN=Note On
+	midiNodeOn.midi1 = 0x90; // 9=Note On / 0=Channel 0
+	midiNodeOn.midi2 = 60;  // Note
+	midiNodeOn.midi3 = 127; // Velocity=127
 
 	struct midiHID_t midiNodeOff;
-	midiNodeOff.data[0] = 0x08; // CI= Virtual Channel 1 & CIN=Note On
-	midiNodeOff.data[1] = 0x80; // 8=Note Off / 0=Channel 0
-	midiNodeOff.data[2] = 60; //Note
-	midiNodeOff.data[3] = 127; // Velocity=127
+	midiNodeOff.cable = 0x08; // CI= Virtual Channel 1 & CIN=Note Off
+	midiNodeOff.midi1 = 0x80; // 8=Note Off / 0=Channel 0
+	midiNodeOff.midi2 = 60; //Note
+	midiNodeOff.midi3 = 127; // Velocity=127
 
   /* USER CODE END 1 */
   
@@ -282,6 +326,7 @@ int main(void)
   MX_ADC2_Init();
   MX_USB_DEVICE_Init();
   MX_TIM1_Init();
+  MX_SPI2_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start(&htim1);
 
@@ -291,14 +336,54 @@ int main(void)
   uint16_t lastKeyMatrix[NUM_COLS][NUM_ROWS] = {0};
   uint8_t lastFader[NUM_COLS] = {0};
 
+  RGB_LED_Init();
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
+  WRITE_REG(GPIOC->BSRR, GPIO_BSRR_BS13); //LED Off
+
+  uint8_t refreshCounter = 0;
+  uint16_t animationCounter = 0;
+  uint8_t previousAnimationStep = 0;
+  uint8_t startUpAnimationRunning = 1;
+
   while (1)
   {
+
+	  // Render startup animation
+	  // TODO: Move to separate function
+	  // TODO: Add fixed step timing instead of simple cycle counter
+	  if(startUpAnimationRunning) {
+
+		  uint8_t animationStep = animationCounter / 50;
+
+		  if(previousAnimationStep != animationStep) {
+			  previousAnimationStep = animationStep;
+
+			  renderAnimationStep(animationStep);
+
+			  RGB_LED_Flush();
+		  }
+
+		  if(animationStep == 60) {
+			  RGB_LED_Clear();
+			  RGB_LED_Flush();
+			  startUpAnimationRunning = 0;
+		  }
+
+		  animationCounter++;
+	  }
+
+	  // Periodic refresh of leds
+	  // TODO: use fixed timing
+	  if(refreshCounter == 0 && startUpAnimationRunning == 0) {
+		  RGB_LED_Flush();
+	  }
+	  refreshCounter++;
+
 	  for(uint8_t col=0; col < NUM_COLS; col++) {
 		resetCols();
 		setCol(col);
@@ -313,13 +398,13 @@ int main(void)
 				uint8_t note = row * NUM_COLS + col;
 
 				if (value == 0) {
-					midiNodeOn.data[2] = note;
-					midiNodeOn.data[3] = 127;
-					USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
+					midiNodeOn.midi2 = note;
+					midiNodeOn.midi3 = 127;
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 				} else {
-					midiNodeOff.data[2] = note;
-					midiNodeOff.data[3] = 127;
-					USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
+					midiNodeOff.midi2 = note;
+					midiNodeOff.midi3 = 127;
+					USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOff, 4);
 				}
 
 				lastKeyMatrix[col][row] = value;
@@ -332,11 +417,11 @@ int main(void)
 
 		uint8_t adcResult = poolADC(col);
 
-		if(abs(lastFader[col] - adcResult) > 1) {
-			midiNodeOn.data[2] = 100 + col;
-			midiNodeOn.data[3] = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
+		if(abs(lastFader[col] - adcResult) > 2 || (adcResult == 0 && lastFader[col] != 0)) {
+			midiNodeOn.midi2 = 100 + col;
+			midiNodeOn.midi3 = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
 
-			USBD_HID_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
+			USBD_MIDI_SendReport(&hUsbDeviceFS, &midiNodeOn, 4);
 
 			lastFader[col] = adcResult;
 		}
@@ -429,7 +514,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -474,7 +559,7 @@ static void MX_ADC2_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_1;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -482,6 +567,44 @@ static void MX_ADC2_Init(void)
   /* USER CODE BEGIN ADC2_Init 2 */
 
   /* USER CODE END ADC2_Init 2 */
+
+}
+
+/**
+  * @brief SPI2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI2_Init(void)
+{
+
+  /* USER CODE BEGIN SPI2_Init 0 */
+
+  /* USER CODE END SPI2_Init 0 */
+
+  /* USER CODE BEGIN SPI2_Init 1 */
+
+  /* USER CODE END SPI2_Init 1 */
+  /* SPI2 parameter configuration*/
+  hspi2.Instance = SPI2;
+  hspi2.Init.Mode = SPI_MODE_MASTER;
+  hspi2.Init.Direction = SPI_DIRECTION_2LINES; //SPI_DIRECTION_2LINES;
+  hspi2.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi2.Init.NSS = SPI_NSS_SOFT;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi2.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI2_Init 2 */
+
+  /* USER CODE END SPI2_Init 2 */
 
 }
 
@@ -547,19 +670,19 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_3 
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7 
-                          |GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+                          |GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4 
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8 
+                          |GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_10|GPIO_PIN_15, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC14 PC15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pins : PC13 PC14 PC15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -574,20 +697,20 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 PB10 PB11 
-                           PB12 PB13 PB14 PB3 
-                           PB4 PB5 PB6 PB7 
-                           PB8 PB9 */
+                           PB12 PB14 PB3 PB4 
+                           PB5 PB6 PB7 PB8 
+                           PB9 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_10|GPIO_PIN_11 
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_3 
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7 
-                          |GPIO_PIN_8|GPIO_PIN_9;
+                          |GPIO_PIN_12|GPIO_PIN_14|GPIO_PIN_3|GPIO_PIN_4 
+                          |GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8 
+                          |GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA8 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_15;
+  /*Configure GPIO pins : PA8 PA10 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_10|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

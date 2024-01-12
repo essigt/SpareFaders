@@ -1,0 +1,3 @@
+[submodule "Hardware/pcb/xFaders_keys/kicad-keyboard-parts.pretty"]
+	path = Hardware/pcb/xFaders_keys/kicad-keyboard-parts.pretty
+	url = https://github.com/ebastler/kicad-keyboard-parts.pretty
