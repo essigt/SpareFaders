@@ -353,7 +353,7 @@ int main(void)
 
 		uint8_t adcResult = poolADC(col);
 
-		if(abs(lastFader[col] - adcResult) > 2) {
+		if(abs(lastFader[col] - adcResult) > 2 || (adcResult == 0 && lastFader[col] != 0)) {
 			midiNodeOn.midi2 = 100 + col;
 			midiNodeOn.midi3 = adcResult >> 1; // Reduce by one last bit to get a 7 bit resolution (MIDI)
 
