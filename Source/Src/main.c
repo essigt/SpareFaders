@@ -224,6 +224,11 @@ uint8_t poolADC(uint8_t col) {
 		HAL_ADC_Stop(&hadc1);
 	}
 
+	// lower limit
+	if(adcResult == 1) {
+		adcResult = 0;
+	}
+
 	return adcResult;
 }
 
